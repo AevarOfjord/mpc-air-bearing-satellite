@@ -21,6 +21,8 @@ An **autonomous satellite control system** that uses **Model Predictive Control 
 
 **In plain terms**: A small satellite floats frictionlessly on air bearings. It uses 8 compressed air thrusters and advanced control algorithms to move to targets and follow paths. Everything runs in software (simulation) or on real hardware.
 
+![Rendered Images of the Satellite and the Platform](images/satellite.jpg)
+
 ---
 
 ## Quick Start
