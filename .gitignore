@@ -1,0 +1,33 @@
+# Sensitive credentials and licenses
+gurobi.lic
+*.lic
+
+# Python
+__pycache__/
+.pytest_cache/
+
+# Virtual environments
+venv
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup files
+*_backup.py
+*.bak
+
+# Simulation Data Output (ignore simulation runs, keep real hardware and comparison data)
+#Data/Simulation/
+
+# Log files
+.log

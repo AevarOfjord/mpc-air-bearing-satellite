@@ -1,0 +1,20 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ⚠️ Issues Are Disabled - This is a Read-Only Repository
+    url: https://github.com/AevarOfjord/mpc-air-bearing-satellite/discussions
+    about: This repository is not actively maintained. Use Discussions for questions or fork the repository to make modifications.
+  - name: 💬 GitHub Discussions (Recommended)
+    url: https://github.com/AevarOfjord/mpc-air-bearing-satellite/discussions
+    about: Ask questions, share your adaptations, or discuss MPC strategies with the community
+  - name: 📧 Email for Urgent Matters Only
+    url: mailto:ofjord99@gmail.com
+    about: For security issues or critical safety concerns. Note - responses may be delayed.
+  - name: 📚 Read the Documentation First
+    url: https://github.com/AevarOfjord/mpc-air-bearing-satellite#documentation
+    about: Comprehensive documentation covers installation, usage, troubleshooting, and architecture
+  - name: 🔧 Gurobi Support
+    url: https://support.gurobi.com/
+    about: Official support for Gurobi Optimizer license and solver issues
+  - name: 📹 OptiTrack Support
+    url: https://v21.optitrack.com/support/
+    about: Official support for OptiTrack Motive motion capture system

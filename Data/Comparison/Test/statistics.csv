@@ -1,0 +1,24 @@
+Metric,Real Test,Simulation,Absolute Error,Error %
+Position Error Mean (m),0.1791,0.2167,0.0376,20.99
+Position Error Max (m),0.9328,0.9339,0.0011,0.12
+Position Error Std (m),0.1157,0.1253,0.0096,8.30
+Final Position Error (m),0.0241,0.0013,0.0228,94.61
+Angle Error Mean (deg),12.72,13.42,0.7000,5.50
+Angle Error Max (deg),80.42,80.43,0.0100,0.01
+Final Angle Error (deg),0.51,0.18,0.3300,64.71
+Velocity Mean (m/s),0.0630,0.0642,0.0012,1.90
+Velocity Max (m/s),0.1267,0.1214,0.0053,4.18
+Final Velocity (m/s),0.0051,0.0006,0.0045,88.24
+Thruster T1 Duty (%),14.13,5.63,8.5000,60.16
+Thruster T2 Duty (%),15.93,5.48,10.4500,65.60
+Thruster T3 Duty (%),7.58,9.33,1.7500,23.09
+Thruster T4 Duty (%),11.74,9.85,1.8900,16.10
+Thruster T5 Duty (%),7.98,10.57,2.5900,32.46
+Thruster T6 Duty (%),8.78,27.08,18.3000,208.43
+Thruster T7 Duty (%),12.48,7.82,4.6600,37.34
+Thruster T8 Duty (%),17.22,20.57,3.3500,19.45
+Avg Thrusters Active,0.96,0.96,0.0000,0.00
+Total Thrust Usage (s),188.04,190.80,2.7600,1.47
+Solve Time Mean (ms),4.61,5.64,1.0300,22.34
+Solve Time Max (ms),32.10,24.25,7.8500,24.45
+Test Duration (s),196.16,198.00,1.8400,0.94

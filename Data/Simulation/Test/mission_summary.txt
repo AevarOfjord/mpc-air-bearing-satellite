@@ -1,0 +1,184 @@
+================================================================================
+SATELLITE CONTROL SYSTEM - MISSION SUMMARY & CONFIGURATION
+================================================================================
+Generated: 2025-10-26 21:03:13
+Data Directory: Data/Simulation/26-10-2025_20-56-06
+================================================================================
+
+================================================================================
+MISSION CONFIGURATION - RECREATION DATA
+================================================================================
+This section contains all information needed to recreate this exact mission.
+
+MISSION TYPE: PROFILE FOLLOWING (MODE 3)
+--------------------------------------------------
+Description: Satellite follows a moving target along a custom path profile
+Mission Phases:
+  Phase 1: Move to closest point on profile and stabilize (3 seconds)
+  Phase 2: Track moving target along the path profile
+  Phase 3: Stabilize at completion point (5 seconds)
+
+STARTING CONFIGURATION:
+  Starting X position:     2.432 m
+  Starting Y position:     -0.293 m
+  Starting orientation:    -172.3°
+
+SHAPE CONFIGURATION:
+  Shape Center X:          0.000 m
+  Shape Center Y:          0.000 m
+  Shape Rotation:          0.0°
+  Offset Distance:         0.500 m
+  Path Length:             11.930 m
+  Number of Path Points:   311
+
+MOVING TARGET CONFIGURATION:
+  Target Speed:            0.070 m/s
+  Estimated Duration:      183.4 s
+
+OBSTACLE CONFIGURATION:
+  Obstacle Avoidance:      DISABLED
+
+================================================================================
+CONTROLLER CONFIGURATION
+================================================================================
+These parameters affect mission performance and control behavior.
+
+MPC CONTROLLER PARAMETERS:
+--------------------------------------------------
+  Controller Type:         Linearized MPC (A*x[k] + B*u[k])
+  Solver:                  Gurobi
+  Prediction Horizon:      15 steps
+  Control Horizon:         12 steps
+  Simulation Timestep:     0.020 s
+  Control Timestep:        0.060 s
+  Solver Time Limit:       0.050 s
+
+COST FUNCTION WEIGHTS:
+--------------------------------------------------
+  Position Weight (Q):     1000.0
+  Velocity Weight (Q):     1750.0
+  Angle Weight (Q):        1000.0
+  Angular Vel Weight (Q):  1500.0
+  Thrust Penalty (R):      1.000
+  Switch Penalty (R):      0.000
+
+CONTROL CONSTRAINTS:
+--------------------------------------------------
+  Max Velocity:            0.150 m/s
+  Max Angular Velocity:    90.0°/s
+  Position Bounds:         ±3.0 m
+
+TOLERANCE THRESHOLDS:
+--------------------------------------------------
+  Position Tolerance:      0.050 m
+  Angle Tolerance:         3.0°
+  Velocity Tolerance:      0.050 m/s
+  Angular Vel Tolerance:   3.0°/s
+
+PHYSICAL PARAMETERS:
+--------------------------------------------------
+  Total Mass:              23.090 kg
+  Moment of Inertia:       0.323645 kg·m²
+  Satellite Size:          0.290 m
+  COM Offset:              (0.005553, 0.000784) m
+
+THRUSTER FORCES:
+  Thruster 1:             0.441450 N
+  Thruster 2:             0.430659 N
+  Thruster 3:             0.427716 N
+  Thruster 4:             0.438017 N
+  Thruster 5:             0.468918 N
+  Thruster 6:             0.446846 N
+  Thruster 7:             0.466956 N
+  Thruster 8:             0.484124 N
+
+REALISTIC PHYSICS SETTINGS:
+--------------------------------------------------
+  Realistic Physics:       ENABLED
+  Linear Damping Coeff:    1.800 N/(m/s)
+  Rotational Damping:      0.3000 N·m/(rad/s)
+  Position Noise Std:      0.00 mm
+  Angle Noise Std:         0.00°
+  Velocity Noise Std:      0.00 mm/s
+  Angular Vel Noise Std:   0.00°/s
+  Thruster Valve Delay:    0.0 ms
+  Thrust Rampup Time:      0.0 ms
+  Thrust Force Noise:      0.0%
+  Random Disturbances:     ENABLED
+  Disturbance Force Std:   0.005 N
+  Disturbance Torque Std:  0.0050 N·m
+
+================================================================================
+MISSION PERFORMANCE RESULTS
+================================================================================
+
+[FORMULATION] LINEARIZED MPC FORMULATION ANALYSIS
+--------------------------------------------------
+Formulation Type:          A*x[k] + B*u[k] (Linearized Dynamics)
+Average Problem Size:      nan variables, nan constraints
+Average Objective Value:   nan
+
+[POSITION] POSITION & TRAJECTORY ANALYSIS
+--------------------------------------------------
+Initial Position:          (2.432, -0.293) m
+Final Position:            (1.559, -0.348) m
+Target Position:           (1.500, -0.303) m
+Initial Position Error:    0.9319 m
+Final Position Error:      0.0745 m
+Position Improvement:      92.0%
+Total Distance Traveled:   12.769 m
+Trajectory Efficiency:     7.3%
+
+ORIENTATION ANALYSIS
+--------------------------------------------------
+Initial Angle Error:       82.30°
+Final Angle Error:         0.45° (target: <3.0°)
+Angle Improvement:         99.5%
+Final Velocity Magnitude:  0.0039 m/s
+Final Angular Velocity:    -0.07°/s
+
+LINEARIZED MPC CONTROLLER PERFORMANCE
+--------------------------------------------------
+Total Simulation Time:     194.9 s
+MPC Updates:               3248 cycles
+MPC Update Rate:           16.7 Hz
+Fastest MPC Solve:         0.007 s
+Slowest MPC Solve:         0.026 s
+Average MPC Solve:         0.011 s
+MPC Solve Std Dev:         0.001 s
+Real-time Performance:     17.6% of available time
+
+CONTROL EFFORT & FUEL ANALYSIS
+--------------------------------------------------
+Total Thruster Activations: 3027
+Total Control Magnitude:    2311.28 N·s
+Average Control per Step:   0.712 N
+Thruster Switching Events:  2948
+Control Smoothness:         88.7%
+Fuel Efficiency:            181.007 N·s/m
+
+MISSION SUCCESS & TARGET MAINTENANCE ANALYSIS
+--------------------------------------------------
+Position Tolerance:        <0.050 m
+Angle Tolerance:           <3.0°
+Position Target Met:       NO
+Angle Target Met:          YES
+Overall Mission Status:    INCOMPLETE
+
+PRECISION REQUIREMENT NOT MET: Final position error 0.0745m > 0.050m ✗
+
+PRECISION ANALYSIS
+--------------------------------------------------
+Target Precision:          0.050m (5cm)
+Achieved Precision:        0.0745m
+Precision Ratio:           1.49 (FAILED - 49.0% over target)
+
+TARGET STATUS
+--------------------------------------------------
+Target Never Reached:      Mission incomplete
+Remaining Position Error:  0.0245 m
+Remaining Angle Error:     0.00°
+
+================================================================================
+END OF MISSION SUMMARY
+================================================================================
