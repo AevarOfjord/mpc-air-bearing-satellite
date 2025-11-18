@@ -226,8 +226,9 @@ This is a personal research project released for educational and reference use. 
 
 ## Support
 
-**Repository**: https://github.com/AevarOfjord/2D_MPC_Controlled_Binary_Satellite
-**Issues**: https://github.com/AevarOfjord/2D_MPC_Controlled_Binary_Satellite/issues
+**Repository**: https://github.com/AevarOfjord/mpc-air-bearing-satellite
+
+**Issues**: https://github.com/AevarOfjord/mpc-air-bearing-satellite/issues
 
 Need help? Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) or open an issue.
 
