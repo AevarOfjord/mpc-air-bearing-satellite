@@ -353,6 +353,7 @@ class RealSatelliteMPCLinearized:
         self.next_control_time = 0.0
 
         self.target_reached_time = None
+        self.approach_phase_start_time = 0.0
         self.target_maintenance_time = 0.0
         self.times_lost_target = 0
         self.maintenance_position_errors = []
@@ -577,12 +578,15 @@ class RealSatelliteMPCLinearized:
         mpc_iterations = info.get("iterations")
         mpc_optimality_gap = info.get("optimality_gap")
 
-        # Determine mission phase
-        # For shape following, use DXF_SHAPE_PHASE; for waypoint mode, use target_reached_time
-        if hasattr(SatelliteConfig, 'DXF_SHAPE_PHASE') and SatelliteConfig.DXF_SHAPE_PHASE:
+        # Determine mission phase. Only use DXF state when shape mode is active.
+        if getattr(SatelliteConfig, "DXF_SHAPE_MODE_ACTIVE", False) and getattr(
+            SatelliteConfig, "DXF_SHAPE_PHASE", ""
+        ):
             mission_phase = SatelliteConfig.DXF_SHAPE_PHASE  # POSITIONING, TRACKING, or STABILIZING
         else:
-            mission_phase = "STABILIZING" if self.target_reached_time is not None else "APPROACHING"
+            mission_phase = (
+                "STABILIZING" if self.target_reached_time is not None else "APPROACHING"
+            )
 
         # Waypoint number (0 if not in waypoint mode)
         waypoint_number = 0
@@ -736,7 +740,8 @@ class RealSatelliteMPCLinearized:
             # Determine status message
             # For shape following, use DXF_SHAPE_PHASE; for waypoint mode, use target_reached_time
             stabilization_time = None  # Initialize to avoid UnboundLocalError
-            if hasattr(SatelliteConfig, 'DXF_SHAPE_PHASE') and SatelliteConfig.DXF_SHAPE_PHASE:
+            shape_mode_active = getattr(SatelliteConfig, "DXF_SHAPE_MODE_ACTIVE", False)
+            if shape_mode_active and getattr(SatelliteConfig, "DXF_SHAPE_PHASE", ""):
                 phase = SatelliteConfig.DXF_SHAPE_PHASE
                 # Add timing info for all Shape Following phases
                 phase_time = None
@@ -761,7 +766,10 @@ class RealSatelliteMPCLinearized:
                     stabilization_time = self.control_time - self.target_reached_time
                     status_msg = f"STABILIZING (t={stabilization_time:.1f}s)"
                 else:
-                    status_msg = "APPROACHING"
+                    approach_time = max(
+                        self.control_time - self.approach_phase_start_time, 0.0
+                    )
+                    status_msg = f"APPROACHING (t={approach_time:.1f}s)"
 
             active_thruster_ids = [
                 int(x) for x in np.where(thruster_action > 0.5)[0] + 1
@@ -889,6 +897,7 @@ class RealSatelliteMPCLinearized:
                 # Require continuous hold: reset maintenance tracking on loss
                 self.target_reached_time = None
                 self.target_maintenance_time = 0.0
+                self.approach_phase_start_time = self.control_time
 
         # Test completion check
         # --- Stability stop logic ---

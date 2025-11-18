@@ -31,3 +31,4 @@ venv
 
 # Log files
 .log
+simulation.log

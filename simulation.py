@@ -231,6 +231,7 @@ class SatelliteMPCLinearizedSimulation:
 
         # Target maintenance tracking
         self.target_reached_time = None
+        self.approach_phase_start_time = 0.0
         self.target_maintenance_time = 0.0
         self.times_lost_target = 0
         self.maintenance_position_errors = []
@@ -661,12 +662,15 @@ class SatelliteMPCLinearizedSimulation:
         mpc_iterations = mpc_info.get("iterations") if mpc_info else None
         mpc_optimality_gap = mpc_info.get("optimality_gap") if mpc_info else None
 
-        # Determine mission phase
-        # For shape following, use DXF_SHAPE_PHASE; for waypoint mode, use target_reached_time
-        if hasattr(SatelliteConfig, 'DXF_SHAPE_PHASE') and SatelliteConfig.DXF_SHAPE_PHASE:
+        # Determine mission phase. Use DXF state only when shape mode is active.
+        if getattr(SatelliteConfig, "DXF_SHAPE_MODE_ACTIVE", False) and getattr(
+            SatelliteConfig, "DXF_SHAPE_PHASE", ""
+        ):
             mission_phase = SatelliteConfig.DXF_SHAPE_PHASE  # POSITIONING, TRACKING, or STABILIZING
         else:
-            mission_phase = "STABILIZING" if self.target_reached_time is not None else "APPROACHING"
+            mission_phase = (
+                "STABILIZING" if self.target_reached_time is not None else "APPROACHING"
+            )
 
         # Waypoint number (0 if not in waypoint mode)
         waypoint_number = 0
@@ -1043,7 +1047,8 @@ class SatelliteMPCLinearizedSimulation:
             # Determine status message
             # For shape following, use DXF_SHAPE_PHASE; for waypoint mode, use target_reached_time
             stabilization_time = None  # Initialize to avoid UnboundLocalError
-            if hasattr(SatelliteConfig, 'DXF_SHAPE_PHASE') and SatelliteConfig.DXF_SHAPE_PHASE:
+            shape_mode_active = getattr(SatelliteConfig, "DXF_SHAPE_MODE_ACTIVE", False)
+            if shape_mode_active and getattr(SatelliteConfig, "DXF_SHAPE_PHASE", ""):
                 phase = SatelliteConfig.DXF_SHAPE_PHASE
                 # Add timing info for all Shape Following phases
                 phase_time = None
@@ -1068,7 +1073,10 @@ class SatelliteMPCLinearizedSimulation:
                     stabilization_time = self.simulation_time - self.target_reached_time
                     status_msg = f"STABILIZING (t={stabilization_time:.1f}s)"
                 else:
-                    status_msg = "APPROACHING"
+                    approach_time = max(
+                        self.simulation_time - self.approach_phase_start_time, 0.0
+                    )
+                    status_msg = f"APPROACHING (t={approach_time:.1f}s)"
 
             obj_value = mpc_info.get("objective_value", 0) if mpc_info else 0
             if obj_value is None:
@@ -1283,17 +1291,18 @@ class SatelliteMPCLinearizedSimulation:
                                     logger.info(
                                         f"MOVING TO NEXT TARGET: ({target_pos[0]:.2f}, {target_pos[1]:.2f}) m, {np.degrees(target_angle):.1f}°"
                                     )
-                                    self.target_state = np.array(
-                                        [
-                                            target_pos[0],
-                                            target_pos[1],
-                                            0.0,
+                                self.target_state = np.array(
+                                    [
+                                        target_pos[0],
+                                        target_pos[1],
+                                        0.0,
                                             0.0,
                                             target_angle,
                                             0.0,
                                         ]
                                     )
                                 self.target_reached_time = None
+                                self.approach_phase_start_time = self.simulation_time
                                 self.target_maintenance_time = 0.0
                         else:
                             # All targets completed - end simulation
