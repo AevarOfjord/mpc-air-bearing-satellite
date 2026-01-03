@@ -5,7 +5,6 @@ This document provides a complete file listing and description of the system arc
 ---
 
 ## Directory Structure
-
 ```
 mpc-air-bearing-satellite/
 │
@@ -164,7 +163,7 @@ mpc-air-bearing-satellite/
 | File | Purpose |
 |------|---------|
 | [mpc.py](mpc.py) | Model Predictive Control optimizer using Gurobi to generate thruster commands. |
-| [model.py](model.py) | Satellite physics model with linearized dynamics for simulation and visualization. |
+| [model.py](model.py) | Static 2D visualization of the satellite layout (thruster positions, COM, air bearings). |
 | [mission.py](mission.py) | Unified mission module supporting waypoint navigation and shape-following behaviors. |
 | [mission_state_manager.py](mission_state_manager.py) | Tracks mission state, waypoint progress, and determines when targets are reached. |
 | [mission_report_generator.py](mission_report_generator.py) | Generates text summaries and performance analysis after missions complete. |
@@ -281,13 +280,35 @@ mpc-air-bearing-satellite/
 
 The system is organized into logical layers:
 
-1. **Entry Points** - `simulation.py`, `real.py`, `visualize.py` coordinate the system
-2. **Control Layer** - `mpc.py` generates commands, `mission_state_manager.py` tracks state
-3. **Hardware/Telemetry Layer** - `satellite_hardware_interface.py`, `telemetry_client.py` handle I/O
-4. **Navigation Layer** - `path_planning_manager.py`, `mission.py` plan trajectories
-5. **Data Layer** - `data_logger.py`, `real_data_simulated.py` manage persistence
-6. **Visualization Layer** - `visualize.py`, UI components generate outputs
-7. **Configuration Layer** - `config/` provides unified parameter management
+1. **User/Test Input** – mission scripts (`mission.py`, the test-mode menus) collect targets, mission type, obstacles, etc.
+2. **Entry Point** – either `simulation.py` or `real.py` boots up the runtime, wiring in mission config, MPC, logging, visualization, etc.
+3. **Mission Logic** – `mission_state_manager.py` (plus `path_planning_manager.py` if obstacles exist) figures out the current waypoint/DXF segment the controller needs to track.
+4. **MPC Optimization** – `mpc.py` linearizes around the current state, builds the MIQP, and solves for the next thruster sequence.
+5. **Execution Layer** – the optimal command is applied either to the virtual satellite (`SatelliteThrusterTester` in the simulator) or over to the real hardware via `satellite_hardware_interface.py` + OptiTrack telemetry.
+6. **Data & Visualization** – every step is logged (`data_logger.py`) and rendered (`visualize.py`) after the mission has completed/stopped.
+
+```mermaid
+graph TD
+    U[User / Mission Input<br/><code>mission.py</code>, test modes] --> A[Workflow Entry<br/><code>simulation.py</code> or <code>real.py</code>]
+    A --> B[Mission Logic<br/><code>mission_state_manager.py</code><br/>Path planning if needed]
+    B --> C[MPC Optimization<br/><code>mpc.py</code><br/>Build/solve MIQP]
+    C --> D[Execution Layer<br/>Simulation: <code>SatelliteThrusterTester</code><br/>Hardware: <code>satellite_hardware_interface.py</code> + OptiTrack]
+    D --> E[Data & Visualization<br/><code>data_logger.py</code> · <code>visualize.py</code> · dashboards]
+    G[[Configuration Layer<br/><code>config/*</code> dataclasses]] -. feeds all .-> U
+    G -. feeds all .-> A
+    G -. feeds all .-> B
+    G -. feeds all .-> C
+    G -. feeds all .-> D
+    G -. feeds all .-> E
+
+    style U fill:#fff5d9,stroke:#d97706,stroke-width:1.2px
+    style A fill:#dbeafe,stroke:#1d4ed8,stroke-width:1.2px
+    style B fill:#dcfce7,stroke:#15803d,stroke-width:1.2px
+    style C fill:#fce7f3,stroke:#be185d,stroke-width:1.2px
+    style D fill:#fef9c3,stroke:#ca8a04,stroke-width:1.2px
+    style E fill:#ede9fe,stroke:#6d28d9,stroke-width:1.2px
+    style G fill:#f5f5f5,stroke:#374151,stroke-width:1.2px,stroke-dasharray: 5 3
+```
 
 ---
 
@@ -295,14 +316,14 @@ The system is organized into logical layers:
 
 | Aspect | Simulation Mode | Hardware Mode |
 |--------|-----------------|---------------|
-| **State Source** | Physics model (`model.py`) | Motion capture system (OptiTrack) |
-| **Loop Rate** | CONTROL_DT = 0.06 s | CONTROL_DT = 0.06s |
-| **Target Update** | Before MPC call | During MPC call |
-| **Sensor Input** | Simulated with noise | Real hardware|
-| **Telemetry** | Internal state | HTTP polling from motive_data_server |
-| **Control Output** | Applied to physics model | Sent to onboard microcontroller via serial |
+| **State Source** | Ground truth from `SatelliteThrusterTester` | OptiTrack telemetry via `telemetry_client.py` |
+| **Satellite Dynamics** | 50 Hz integrator with valve delays, ramp-up/down, damping, and optional disturbances (`testing_environment.py`) | Physical air-bearing vehicle with solenoids and supply pressure dynamics |
+| **Sensor Input** | Perfect pose plus OptiTrack-like noise injected by `SimulationStateValidator` when `USE_REALISTIC_PHYSICS=True` | Raw OptiTrack pose differentiated in `real.py:update_state_from_telemetry()` |
+| **Thruster Execution** | Commands immediately update the simulated valves; the same delay/ramp profiles are emulated in software | Commands are serialized through `satellite_hardware_interface.py` to the microcontroller and actuate the real valves |
+| **Telemetry Path** | Internal state arrays (no networking) | HTTP polling from `Motive/motive_data_server.py` with retry/backoff |
+| **Control Output** | Applied directly to the physics loop | Sent to the hardware interface (serial/UDP/TCP) |
 
-In simulation the target is updated right before each MPC call because the entire loop runs inside `update_simulation()` once the physics step finishes, MissionStateManager selects the next waypoint/DXF phase and the controller immediately uses that target. On hardware the control thread first gathers fresh OptiTrack measurements, then calls `MissionStateManager.update_target_state()` inside the same iteration so the MPC solver works with the newest telemetry before issuing serial commands to the microcontroller.
+Both modes call `MissionStateManager.update_target_state()` immediately before every MPC solve; the only difference is whether the current state comes from OptiTrack or the simulator and whether the vehicle response is physical hardware or the `SatelliteThrusterTester`.
 
 ---
 

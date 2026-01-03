@@ -225,7 +225,7 @@ python3 simulation.py
 
 #### Physics
 ```python
-SIMULATION_DT = 0.02        # 20ms - Physics timestep
+SIMULATION_DT = 0.005        # 5ms - Physics timestep
 CONTROL_DT = 0.06           # 60ms - MPC update rate
 TOTAL_MASS = 23.09          # kg
 MOMENT_OF_INERTIA = 0.312   # kg⋅m²

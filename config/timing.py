@@ -57,7 +57,7 @@ class TimingConfig:
 # ============================================================================
 
 # Simulation and control intervals
-SIMULATION_DT = 0.02  # seconds
+SIMULATION_DT = 0.005  # seconds
 CONTROL_DT = 0.06  # seconds
 MAX_SIMULATION_TIME = 500.0  # seconds
 

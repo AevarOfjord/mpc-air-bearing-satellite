@@ -9,11 +9,12 @@
 | Subscript k                  | Time step index                                  | x_k (state at time k)                                  |
 | Superscript \*               | Optimal value                                    | u\* (optimal control)                                  |
 | Hat (x̂)                      | Estimated/predicted value                        | x̂\_{k+1} (predicted state)                             |
+| Δ (delta prefix)             | Deviation from nominal / discrete step           | Δx = x - x₀, Δt = timestep                             |
 | ‖·‖                          | Euclidean norm                                   | ‖𝐱‖ = √(x² + y²)                                       |
 | ‖·‖\_Q                       | Weighted norm                                    | ‖𝐱‖²_Q = 𝐱ᵀQ𝐱                                          |
 | ∈                            | Element of set                                   | u ∈ {0,1}                                              |
 | ℝ                            | Real numbers                                     | x ∈ ℝ                                                  |
-| 𝒪(·)                         | Big-O notation: "scales as" or "on the order of" | Error = 𝒪(dt²) means error grows proportionally to dt² |
+| 𝒪(·)                         | Big-O notation: "scales as" or "on the order of" | Error = 𝒪(Δt²) means error grows proportionally to Δt² |
 
 **Frame Notation:**
 
@@ -91,16 +92,16 @@ graph LR
 **Simulation Loop Frequency:**
 
 - **Control loop**: 16.67 Hz (60ms per cycle) - same as hardware
-- **Physics integration**: 50 Hz (20ms per step) - Time step for how often the physics model is updated
+- **Physics integration**: 200 Hz (5ms per step) - Time step for how often the physics model is updated
 
 **Key Differences from Hardware:**
 
 - **Physics Simulator** replaces OptiTrack and can inject noise before the controller sees it.
 - **Dynamics integration** takes the role of hardware interface by computing the exact forces/torques from the thruster commands.
-- **Euler integrator** advances the equations of motion with dt = 0.02 s (three physics steps per control cycle) for numerical stability.
+- **Euler integrator** advances the equations of motion with Δt = 0.005 s (twelve physics steps per control cycle) for numerical stability.
 - **Optional disturbances** adds external forces or noises to mimic hardware testing
 
-**Important:** The controller always runs at 16.67 Hz. The 50 Hz loop is purely an internal physics timestep so the simulated vehicle behaves like the real one between solver updates.
+**Important:** The controller always runs at 16.67 Hz. The 200 Hz loop is purely an internal physics timestep so the simulated vehicle behaves like the real one between solver updates.
 
 ---
 
@@ -113,7 +114,7 @@ graph LR
 | **Control Frequency** | 16.67 Hz (0.06s period)                   | 16.67 Hz (0.06s period)                       |
 | **Actuation**         | Solenoid valves (small delay in response) | Instantaneous (delay can be added)            |
 | **Dynamics**          | Real physics + random disturbances        | Euler integration + optional random disturbances |
-| **Physics Update**    | Continuous (real-time)                    | 50 Hz (dt = 0.02s discrete steps)             |
+| **Physics Update**    | Continuous (real-time)                    | 200 Hz (dt = 0.005s discrete steps)           |
 | **Latency**           | < 10ms                                    | Instantaneous (delay can be added)            |
 | **Disturbances**      | Unknown air currents, friction            | Disturbance can be added                      |
 
@@ -169,7 +170,7 @@ Use this table whenever you need to call out whether a derivation applies to the
 |   N    | Prediction horizon (steps) | `self.N`, `prediction_horizon`, `mpc_params["prediction_horizon"]` | `mpc.py`, `config/mpc_params.py`                                                 | 12 steps = 0.72s                  |
 |   M    | Control horizon (steps)    | `self.M`, `control_horizon`, `mpc_params["control_horizon"]`       | `mpc.py`, `config/mpc_params.py`                                                 | 12 steps = 0.72s                  |
 |   Δt   | Control timestep (seconds) | `self.dt`, `dt`, `CONTROL_DT`, `mpc_params["dt"]`                  | `mpc.py`, `config/mpc_params.py`, `config/timing.py`, `simulation.py`, `real.py` | 0.06s (16.67 Hz)                  |
-| Δt_sim | Simulation timestep (seconds)       | `dt`, `SIMULATION_DT`                                              | `simulation.py`, `testing_environment.py`, `config/timing.py`                    | 0.02s (50 Hz physics integration) |
+| Δt_sim | Simulation timestep (seconds)       | `dt`, `SIMULATION_DT`                                              | `simulation.py`, `testing_environment.py`, `config/timing.py`                    | 0.005s (200 Hz physics integration) |
 
 ### Physical Parameters
 
@@ -198,7 +199,7 @@ Use this table whenever you need to call out whether a derivation applies to the
 | x_max, y_max | Position limits        | `self.position_bounds`, `POSITION_BOUNDS`, `mpc_params["position_bounds"]`                | `mpc.py`, `config/mpc_params.py`, `simulation_state_validator.py` | ±3.0 m (testbed boundary)   |
 |    v_max     | Velocity limit         | `self.max_velocity`, `MAX_VELOCITY`, `mpc_params["max_velocity"]`                         | `mpc.py`, `config/mpc_params.py`, `simulation_state_validator.py` | 0.25 m/s (safety limit)     |
 |    ω_max     | Angular velocity limit | `self.max_angular_velocity`, `MAX_ANGULAR_VELOCITY`, `mpc_params["max_angular_velocity"]` | `mpc.py`, `config/mpc_params.py`, `simulation_state_validator.py` | π/2 rad/s ≈ 1.571 rad/s     |
-|   θ_bounds   | Angle bounds           | No explicit limit (wrapped)                                                               | `navigation_utils.py` (normalization)                                                      | ±2π (normalized to [-π, π]) |
+|   θ_bounds   | Angle bounds           | ±2π bounds inside MPC, angles re-wrapped for telemetry/logs                               | `mpc.py` (state bounds), `navigation_utils.py` (normalization)                             | Solver clamps θ to ±2π; outputs normalized to [-π, π] |
 |   u_bounds   | Control bounds         | Binary constraint in Gurobi                                                               | `mpc.py` (line ~320)                                                                       | u_i ∈ {0, 1}                |
 
 ### Solver Parameters (Gurobi)
@@ -229,8 +230,8 @@ Use this table whenever you need to call out whether a derivation applies to the
 
 | Concept                    | Implementation                                    | File(s)                         | Code Location                               | Parameters                                                                             |
 | -------------------------- | ------------------------------------------------- | ------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Velocity boost near target | Multiply Q_vel by 3× when close and moving        | `mpc.py`                        | `SatelliteMPCOptimized.get_control_action()` (~520-540)  | `DAMPING_ZONE = 0.25m`, `VELOCITY_THRESHOLD = 0.03 m/s`, `VELOCITY_BOOST_FACTOR = 3.0` |
-| Linearization caching      | Quantize θ to 0.1 rad bins to reuse A, B matrices | `mpc.py`                        | `linearize_dynamics()` (~280-310)           | Cache resolution: 0.1 rad ≈ 5.7°                                                       |
+| Velocity boost near target | Multiply Q_vel by up to 3× when close and still moving | `mpc.py`                        | `SatelliteMPCOptimized.get_control_action()` (~520-540)  | `DAMPING_ZONE = 0.25 m`, `VELOCITY_THRESHOLD = 0.03 m/s`, capped by `MAX_VELOCITY_WEIGHT = 1000` |
+| Linearization caching      | Quantize θ to 0.01 rad bins to reuse A, B matrices | `mpc.py`                        | `linearize_dynamics()` (~280-310)           | Cache resolution: 0.01 rad ≈ 0.57°                                                     |
 | Warm starting              | Shift previous solution by 1 timestep             | `mpc.py`                        | `_apply_warm_start()` (~520-560)            | Copies `u[k+1]` → `u[k]`, provides `.Start` to Gurobi                                  |
 | Damping zone               | Distance threshold for aggressive damping         | `config/mpc_params.py`          | `DAMPING_ZONE`                              | 0.25 m from target                                                                     |
 | Fallback controller        | Simple proportional control if MPC fails          | `mpc.py`                        | `_get_fallback_control()` (~700-750)        | K_p gains tuned for stability                                                          |
@@ -313,8 +314,8 @@ t= 12.3s: APPROACHING (t=12.3s) pos_err=0.452m, ang_err= 15.3°
 - **MPC optimization problem built**: `mpc.py`, `_build_persistent_model()` (~200-350)
 - **Dynamics linearization**: `mpc.py`, `linearize_dynamics()` (~270-320)
 - **MPC solve entry point**: `mpc.py`, `get_control_action()` (~420-500)
-- **Dynamics integration**: `simulation.py`, `step()` (~200-280) and `testing_environment.py`, `step()` (~150-200)
-- **Thruster forces computed**: `simulation.py`, `_apply_thruster_forces()` (~350-420)
+- **Dynamics integration**: `simulation.py`, `SatelliteMPCLinearizedSimulation.update_simulation()` (~1130-1400) and `testing_environment.py`, `SatelliteThrusterTester.update_simulation()` (~352-450)
+- **Thruster forces computed**: `testing_environment.py`, `SatelliteThrusterTester.calculate_forces_and_torques()` (~262-330) – the simulator calls this helper each frame
 
 **Control Loops:**
 
@@ -427,12 +428,12 @@ graph TB
     subgraph Rotate["STEP 2: Rotate to World Frame"]
         B1["Apply Rotation Matrix<br/>cos 45deg = 0.707<br/>sin 45deg = 0.707<br/>Satellite angle theta = 45deg"]
         B2["World Direction<br/>-0.707, -0.707<br/>now points SW"]
-        B3["World Position<br/>0.146, 0 m<br/>rotated from body"]
+        B3["World Position<br/>≈0.060, 0.145 m<br/>rotated from body"]
     end
 
     subgraph Calculate["STEP 3: Calculate Effects"]
         C1["Force Vector<br/>F = 0.441 x -0.707, -0.707<br/>= -0.312, -0.312 N"]
-        C2["Torque<br/>tau = position x force<br/>= 0.0455 N·m CCW"]
+        C2["Torque<br/>tau = position x force<br/>= 0.0265 N·m CCW"]
     end
 
     subgraph Repeat["STEP 4: Repeat for All 8 Thrusters"]
@@ -447,8 +448,8 @@ graph TB
     subgraph Apply["STEP 6: Apply to Satellite"]
         F1["Linear acceleration<br/>a = F_total / 23.09 kg"]
         F2["Angular acceleration<br/>alpha = tau_total / 0.324 kg·m2"]
-        F3["Update velocity<br/>v_new = v + a x 0.02s"]
-        F4["Update position<br/>x_new = x + v x 0.02s"]
+        F3["Update velocity<br/>v_new = v + a × 0.005s"]
+        F4["Update position<br/>x_new = x + v × 0.005s"]
         F5["Same for rotation"]
     end
 
@@ -756,22 +757,22 @@ where $R(\theta)$ rotates each body-frame direction $\mathbf{d}_{b,i}$ into worl
 
 **Example:** For thruster 1 with $\phi_1 = 0^\circ$ (points left in body frame), $F_1 = 0.441$ N, at satellite angle $\theta = 45^\circ$:
 
-$$\mathbf{B}[3, 1] = \frac{0.06}{23.09} \cos(45^\circ) = 0.00184 \text{ m/(s N)}$$
+$$\mathbf{B}[3, 1] = \frac{0.06}{23.09} \cdot 0.441 \cos(45^\circ) \approx 8.1 \times 10^{-4} \text{ m/s}$$
 
-$$\mathbf{B}[4, 1] = \frac{0.06}{23.09} \sin(45^\circ) = 0.00184 \text{ m/(s N)}$$
+$$\mathbf{B}[4, 1] = \frac{0.06}{23.09} \cdot 0.441 \sin(45^\circ) \approx 8.1 \times 10^{-4} \text{ m/s}$$
 
-So at 45° the world-frame component of thruster 1 splits evenly between x and y, and multiplying by $\Delta t / m$ tells us the single-timestep velocity increment (≈1.84 mm/s in both axes) if that thruster fires for the whole MPC interval.
+So at 45° the world-frame component of thruster 1 splits evenly between x and y, and the $\Delta t / m$ factor tells us the single-timestep velocity increment (≈0.81 mm/s in both axes) if that thruster fires for the whole MPC interval.
 
 ### Caching Strategy
 
 Computing the rotation 𝐑(θ) and regenerating the Jacobians every solve costs a few hundred microseconds, so `linearize_dynamics()` keeps a small cache keyed by coarse attitude bins:
 
 ```python
-cache_resolution = 0.1  # radians ≈ 5.7°
+cache_resolution = 0.01  # radians ≈ 0.57°
 cache_key = int(theta / cache_resolution)
 ```
 
-When the current angle falls into a bucket we’ve already computed, we reuse the stored (A, B) pair instead of recalculating it. If θ drifts into a new bucket we rebuild the matrices and update the cache. Quantizing at 0.1 rad (≈5.7°) keeps the approximation error small relative to our control bandwidth while avoiding redundant trigonometry and matrix fills.
+When the current angle falls into a bucket we’ve already computed, we reuse the stored (A, B) pair instead of recalculating it. If θ drifts into a new bucket we rebuild the matrices and update the cache. Quantizing at 0.01 rad (≈0.57°) keeps the approximation error small relative to our control bandwidth while avoiding redundant trigonometry and matrix fills.
 
 ### External Forces, Disturbances, and Noise
 
@@ -966,8 +967,8 @@ Where $\dot{\mathbf{x}}_k$ is the derivative at the current state.
 
 **Disadvantages:**
 
-1. **Lower accuracy for bigger timesteps:** Euler assumes the derivative stays constant over the whole timestep. When $\Delta t$ is large, that assumption breaks and error grows with $\Delta t^2$, so distances and angles drift. Running the simulation at 0.02 s keeps these errors negligible.
-2. **Can go unstable:** if the timestep is too large for the system dynamics (e.g., fast damping or rotation), the solution can “explode” numerically. To prevent that we keep the physics integrator on the short 0.02 s step even though the MPC loop operates at 0.06 s.
+1. **Lower accuracy for bigger timesteps:** Euler assumes the derivative stays constant over the whole timestep. When $\Delta t$ is large, that assumption breaks and error grows with $\Delta t^2$, so distances and angles drift. Running the simulation at 0.005 s keeps these errors negligible.
+2. **Can go unstable:** if the timestep is too large for the system dynamics (e.g., fast damping or rotation), the solution can “explode” numerically. To prevent that we keep the physics integrator on the short 0.005 s step even though the MPC loop operates at 0.06 s.
 
 **Implementation in simulation.py:**
 
@@ -985,7 +986,7 @@ For stable integration, the timestep must satisfy:
 
 $$\Delta t < \frac{2}{\lambda_{\max}}$$
 
-Where $\lambda_{\max}$ is the largest eigenvalue of matrix A. Because $A = I + \Delta t A_c$ for Euler discretization, its eigenvalues are $1 + \Delta t \lambda_i(A_c)$. In the current simplified model $A_c$ contains only kinematic couplings (zeros elsewhere), so every $\lambda_i(A_c) = 0$ and $A$ ends up with ones on the diagonal (i.e., $\lambda_{\max}(A) = 1 + 0$). The stability bound therefore reduces to $\Delta t < 2 / 1 = 2$ s, which our 0.02 s integrator easily satisfies.
+Where $\lambda_{\max}$ is the largest eigenvalue of matrix A. Because $A = I + \Delta t A_c$ for Euler discretization, its eigenvalues are $1 + \Delta t \lambda_i(A_c)$. In the current simplified model $A_c$ contains only kinematic couplings (zeros elsewhere), so every $\lambda_i(A_c) = 0$ and $A$ ends up with ones on the diagonal (i.e., $\lambda_{\max}(A) = 1 + 0$). The stability bound therefore reduces to $\Delta t < 2 / 1 = 2$ s, which our 0.005 s integrator easily satisfies.
 
 ### MPC's Discrete Model
 
@@ -1183,12 +1184,12 @@ We profiled three representative missions (8,233 solves total). All data comes f
 | Point-to-Point Test 2 (2,2,180°→0,0,0°)  | 3.43 ms | 1.50 ms | 6.00 ms  | 1.02 ms | 5.30 ms | 653    |
 | Circling Mission (return to start)       | 3.41 ms | 1.50 ms | 14.70 ms | 0.83 ms | 4.20 ms | 3109   |
 
-**Summary:**
+**Summary (recent sim vs hardware logs):**
 
-- **Average:** 3.31 ms across all solves.
-- **Range:** 1.50–14.70 ms with no outliers beyond 15 ms.
-- **Safety margin:** 50 ms limit ÷ 14.70 ms max ≈ 3.4×.
-- **Timeout rate:** 0 / 8,233 runs.
+- **Simulation avg/max:** 5.64 ms mean, 24.25 ms max (95th percentile 6.85 ms) across 3,301 solves.
+- **Hardware avg/max:** 4.61 ms mean, 32.10 ms max (95th percentile 6.00 ms) across 3,270 solves.
+- **Safety margin:** 60 ms control budget ÷ 32 ms worst-case ≈ 1.9× on hardware, so still real-time safe.
+- **Timeout rate:** 0 / 6,571 combined runs, optimality gap ≤ 1% in all cases.
 
 ### Key Observations
 
@@ -1475,9 +1476,9 @@ So for a 0.05 rad step, the X-force error is under $0.35 \times 0.05^2 \approx
 
 Using the bound above:
 
-- Δθ = 0.01 rad (~0.6°) → force error < 0.0035 N.
-- Δθ = 0.05 rad (~2.9°) → force error < 0.09 N.
-- Δθ = 0.10 rad (~5.7°) → force error < 0.35 N (≈38% of the strongest co-linear pair’s thrust, and still below any combination we command).
+- Δθ = 0.01 rad (~0.6°) → force error < $3.5 \times 10^{-5}$ N.
+- Δθ = 0.05 rad (~2.9°) → force error < $8.8 \times 10^{-4}$ N.
+- Δθ = 0.10 rad (~5.7°) → force error < $3.5 \times 10^{-3}$ N (≈0.4% of the strongest co-linear pair’s thrust, and still below any combination we command).
 
 These bounds apply to a single 60 ms step; on the next MPC cycle we re-linearize around the updated state, so the per-step error doesn’t accumulate unless Δθ stays large every step.
 
@@ -1493,10 +1494,9 @@ Breakdowns are rare but can happen when:
 
 ### Improving Linearization Accuracy
 
-- **Shorter timestep:** error scales with Δt², so dropping dt_sim would help (at the cost of CPU).
+- **Shorter timestep:** Euler’s local error over a 60 ms control interval is proportional to $(\Delta t)^2$. With our current Δt = 0.005 s, the per-step integration error is roughly $0.45 \text{ N} \times 10^{-5} \approx 4.5 \times 10^{-6}$ N. Reducing Δt further shrinks that error but increases the CPU cost.
 - **More frequent updates:** already done each MPC cycle.
 - **Higher-order models:** theoretically better but not affordable for the real-time MIQP.
-- **Gain scheduling:** partially implemented via the adaptive weights mentioned earlier.
 
 ---
 
@@ -1639,7 +1639,16 @@ The cost weights Q and R are the main tuning knobs. Changing them alters the con
 
 ### Mathematical Dependency
 
-Formally the controller solves $\mathbf{u}^*(\mathbf{Q}, \mathbf{R}) = \arg\min_{\mathbf{u}} J(\mathbf{u}, \mathbf{Q}, \mathbf{R})$, so every weight directly influences the optimal thruster sequence. Rather than diving into the analytic derivatives, we focus on the practical effect: increasing any Q weight tightens tracking for the corresponding state at the expense of higher thrust usage, while increasing R discourages firing thrusters and makes the motion less aggressive. Lowering those weights has the opposite effect.
+Formally the controller solves $\mathbf{u}^*(\mathbf{Q}, \mathbf{R}) = \arg\min_{\mathbf{u}} J(\mathbf{u}, \mathbf{Q}, \mathbf{R})$, so every weight directly influences the optimal thruster sequence. Our default diagonal weights are:
+
+- $Q_{\text{pos}} = 1000$
+- $Q_{\text{vel}} = 1750$
+- $Q_{\text{angle}} = 1000$
+- $Q_{\text{angvel}} = 1500$
+- $R_{\text{thrust}} = 1.0$
+- $R_{\text{switch}} = 0.0$
+
+Increasing any Q entry tightens tracking for that state at the expense of higher thrust usage, while increasing an R entry discourages firing thrusters and makes the motion less aggressive. Lowering those weights has the opposite effect.
 
 ### Position Weight Sensitivity (Q_x, Q_y)
 
@@ -1651,11 +1660,11 @@ Velocity weights control how aggressively we damp residual motion. Larger values
 
 ### Angle Weight Sensitivity (Q_ang)
 
-**Current value**: Q_ang = 1000
-
-### Angle Weight Sensitivity (Q_θ)
-
 Angle weights dictate how tightly we enforce heading alignment. Raising them makes the controller hold orientation precisely and rotate more deliberately, at the cost of slower turns and higher energy use. Lower angle weights allow faster rotations and smaller thruster usage, but the vehicle may overshoot the target heading or oscillate before settling.
+
+### Angular Velocity Weight Sensitivity (Q_angvel)
+
+This weight damps rotational rates. Larger values bleed off spin faster and prevent overshoot when changing orientation, but they can slow down large-angle maneuvers. Smaller values allow faster spins and potentially shorter reorientation times, at the risk of oscillation or lingering angular error.
 
 ### Control Effort Penalty (R_thrust)
 
@@ -1663,7 +1672,7 @@ Because each thruster command is binary, the control-effort weight mainly discou
 
 ### Switching Penalty (R_switch)
 
-`R_switch` penalizes turning thrusters on and off between timesteps. Raising it discourages rapid toggling, which reduces valve wear and chatter but may force the controller to hold partially-effective sequences a little longer. Leaving it at zero allows maximum responsiveness (the default), but if a scenario causes the thrusters to buzz you can add a modest switching weight to calm the pattern without degrading overall accuracy.
+Penalizes turning thrusters on and off between timesteps. Raising it discourages rapid toggling, which reduces valve wear and chatter but may force the controller to hold partially-effective sequences a little longer. Leaving it at zero allows maximum responsiveness.
 
 ### Adaptive Weight Boost (Near Target)
 
@@ -1701,10 +1710,3 @@ Gurobi parameters matter almost as much as Q/R:
 | Presolve = 2     | Aggressive simplification | Faster or slower (problem-dependent)    |
 | Cuts = 1         | Moderate cut generation   | Balance between reduction and overhead  |
 | TimeLimit = 50ms | Hard cutoff               | Guarantees real-time, may be suboptimal |
-
-We currently run Presolve=2, Cuts=1, MIPGap=1%, TimeLimit=50 ms, which yields:
-
-- 3.1–3.3 ms average solve time.
-- 1.4–14.7 ms range across representative runs.
-- Reported optimality gap always ≤1%.
-- A comfortable 3.4× margin relative to the 60 ms control period.

@@ -50,3 +50,6 @@ ezdxf>=0.17.0
 
 # Geometric Operations
 shapely>=1.8.0
+
+# Testing Framework
+pytest>=6.2.0

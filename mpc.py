@@ -181,7 +181,7 @@ class SatelliteMPCOptimized:
         theta = x_current[2]
 
         # Cache check (quantize angle to avoid over-caching)
-        cache_resolution = 0.1  # radians (~5.7 degrees)
+        cache_resolution = 0.01  # radians (~0.57 degrees)
         cache_key = int(theta / cache_resolution)
 
         if cache_key in self._linearization_cache:
