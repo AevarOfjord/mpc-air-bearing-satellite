@@ -735,7 +735,7 @@ def test_mpc_converges_to_target():
 ### GitHub Actions Example
 
 ```yaml
-# .github/workflows/tests.yml
+# Example CI workflow for your fork
 name: Tests
 
 on: [push, pull_request]

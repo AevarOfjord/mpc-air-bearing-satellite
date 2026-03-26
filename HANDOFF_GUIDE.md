@@ -27,7 +27,8 @@ If you're reading this, this guide ensures you can operate it safely and maintai
 - [ ] **Get Gurobi License**
   - Go to: https://www.gurobi.com/academia/academic-program-and-licenses/
   - Register with your academic `.edu` email
-  - Download `gurobi.lic` and place in project root
+  - Download `gurobi.lic` and keep it local only
+  - Placing it in the project root is supported and gitignored
   - Verify: `python3 -c "import gurobipy; print('OK')"`
 
 - [ ] **Install dependencies**
@@ -329,11 +330,12 @@ ls /dev/tty*  # macOS/Linux
 
 **Diagnosis**:
 - Check you have academic license (not trial)
-- Verify `gurobi.lic` is in project root
+- Verify `gurobi.lic` is available locally
 
 **Solution**:
 - Get academic license (free): https://www.gurobi.com/academia/
-- Place `gurobi.lic` in project root
+- Place `gurobi.lic` in project root or the standard Gurobi license location
+- Keep the license file out of version control
 - Restart Python
 - Verify: `python3 -c "import gurobipy; print('OK')"`
 

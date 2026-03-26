@@ -52,7 +52,7 @@ pip install gurobipy
 # - Register with .edu email
 # - Download gurobi.lic file
 
-# 3. Place license file in project root
+# 3. Place license file in project root (local only, gitignored)
 cp ~/Downloads/gurobi.lic /path/to/mpc-air-bearing-satellite/
 
 # 4. Verify installation

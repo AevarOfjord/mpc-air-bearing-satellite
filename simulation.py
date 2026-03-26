@@ -1540,7 +1540,13 @@ class SatelliteMPCLinearizedSimulation:
             return self._run_simulation_with_globals(show_animation=show_animation)
 
 
-if __name__ == "__main__":
-    from simulation_test_modes import main
+def main() -> int:
+    """Console entrypoint for simulation workflows."""
+    from simulation_test_modes import main as run_main
 
-    main()
+    run_main()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1241,7 +1241,13 @@ class RealSatelliteMPCLinearized:
                         pass
 
 
-if __name__ == "__main__":
-    from real_test_modes import main
+def main() -> int:
+    """Console entrypoint for real-hardware workflows."""
+    from real_test_modes import main as run_main
 
-    main()
+    run_main()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

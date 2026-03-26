@@ -10,7 +10,7 @@ This is an academic research project. This repository is provided as-is for educ
 
 **NEVER commit sensitive files to version control:**
 
-- ✅ `gurobi.lic` is in `.gitignore` - keep it that way
+- ✅ `gurobi.lic` belongs in local storage only and is gitignored in this repository
 - ✅ Never commit `.env` files
 - ✅ Never commit API keys or passwords
 - ✅ Use environment variables for secrets
@@ -20,7 +20,7 @@ This is an academic research project. This repository is provided as-is for educ
 Your Gurobi academic license file contains sensitive credentials:
 
 ```bash
-# Good - License in project root (gitignored)
+# Good - License in project root (local only, gitignored)
 /path/to/project/gurobi.lic  ✅
 
 # Bad - License in repository
@@ -30,7 +30,7 @@ git add gurobi.lic  ❌ NEVER DO THIS
 If you accidentally commit `gurobi.lic`:
 
 1. **Immediately revoke** the license at https://www.gurobi.com/
-2. **Remove from git history** using `git filter-repo`
+2. **Remove from git history** using `git filter-repo`, `git filter-branch`, BFG, or an equivalent history rewrite tool
 3. **Generate a new license**
 4. **Verify** `.gitignore` includes `gurobi.lic`
 

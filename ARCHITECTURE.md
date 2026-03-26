@@ -125,18 +125,8 @@ mpc-air-bearing-satellite/
 │   ├── LESSONS_LEARNED.md           # Development lessons learned
 │   ├── requirements.txt             # Python dependencies
 │   ├── pyproject.toml               # Project metadata
-│   ├── .gitignore                   # Git ignore rules
+│   ├── .gitignore                   # Git ignore rules for local artifacts and secrets
 │   └── LICENSE                      # License
-│
-├── GitHub Configuration (.github/)
-│   ├── CONTRIBUTING.md              # Contribution guidelines
-│   ├── SUPPORT.md                   # Support resources
-│   └── ISSUE_TEMPLATE/              # Issue templates
-│       ├── config.yml               # Issue template configuration
-│       ├── bug_report.md            # Bug report template
-│       ├── feature_request.md       # Feature request template
-│       ├── hardware_issue.md        # Hardware issue template
-│       └── documentation.md         # Documentation issue template
 │
 ├── Images (images/)                 # Project images and diagrams
 │

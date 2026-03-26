@@ -28,7 +28,8 @@ Complete guide for running simulation tests without hardware requirements.
 pip install -r requirements.txt
 
 # Get Gurobi academic license (free for students)
-# Place gurobi.lic in project root
+# Keep gurobi.lic local only
+# Project root is supported and gitignored
 
 # Run simulation
 python3 simulation.py
@@ -58,7 +59,8 @@ Gurobi is **free for academic use**:
 1. Register at: https://www.gurobi.com/academia/academic-program-and-licenses/
 2. Generate license (use university email)
 3. Download `gurobi.lic`
-4. Place in project root directory
+4. Place it in the project root directory or the standard Gurobi license location
+5. Keep it out of version control
 
 **Verify installation:**
 ```bash

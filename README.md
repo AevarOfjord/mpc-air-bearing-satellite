@@ -9,8 +9,9 @@
 > This repository is provided as a **complete reference implementation** for educational and research use. It is **not actively maintained** for external contributions.
 >
 > - ✅ **Download, fork, and modify** for your own research
-> - ✅ **Use GitHub Discussions** for questions and comments
-> - ❌ **Pull requests are not accepted** (see [CONTRIBUTING.md](.github/CONTRIBUTING.md))
+> - ✅ **Open a GitHub issue** for bugs, documentation problems, or questions about the reference implementation
+> - ❌ **Pull requests are not accepted** for this repository
+> - ❌ **GitHub Discussions are not enabled**
 > - 📧 **For urgent matters**: ofjord99@gmail.com
 
 ---
@@ -29,17 +30,17 @@ An **autonomous satellite control system** that uses **Model Predictive Control 
 
 ### 1. Install Python Dependencies
 ```bash
-pip install -r requirements.txt  # Includes gurobipy (requires free academic license)
+python3 -m pip install .
 ```
 
 ### 2. Get Gurobi License (Free for Academia)
 - Visit: https://www.gurobi.com/academia/academic-program-and-licenses/
 - Register with `.edu` email → download `gurobi.lic`
-- Place `gurobi.lic` in project root
+- Keep `gurobi.lic` local only. Placing it in the project root is supported and gitignored.
 
 ### 3. Run Simulation
 ```bash
-python3 simulation.py
+satellite-sim
 ```
 Follow the prompts to navigate to waypoints or follow shapes.
 
@@ -49,12 +50,12 @@ Follow the prompts to navigate to waypoints or follow shapes.
 
 | What | What it Does | Command |
 |------|-------------|---------|
-| **simulation.py** | Run MPC control on virtual satellite | `python3 simulation.py` |
-| **real.py** | Run MPC control on real hardware | `python3 real.py` |
+| **simulation.py** | Run MPC control on virtual satellite | `satellite-sim` or `python3 simulation.py` |
+| **real.py** | Run MPC control on real hardware | `satellite-real` or `python3 real.py` |
 | **mpc.py** | MPC solver & optimization logic | Imported by sim/real |
-| **visualize.py** | Creates animations & performance plots (done automatically after each run, or manually) | `python3 visualize.py` |
+| **visualize.py** | Creates animations & performance plots (done automatically after each run, or manually) | `satellite-visualize` or `python3 visualize.py` |
 | **comparison.py** | Compare sim vs real hardware results | `python3 comparison.py` |
-| **testing_environment.py** | Manual control interface | `python3 testing_environment.py` |
+| **testing_environment.py** | Manual control interface | `satellite-test` or `python3 testing_environment.py` |
 | **config/** | All system parameters (physics, timing, MPC) | Import as needed |
 
 ---
@@ -110,13 +111,14 @@ Follow the prompts to navigate to waypoints or follow shapes.
 
 ### Steps
 ```bash
-# 1. Install dependencies
-pip install -r requirements.txt
+# 1. Install the package and runtime dependencies
+python3 -m pip install .
 
 # 2. Get free academic Gurobi license
 # - Visit: https://www.gurobi.com/academia/academic-program-and-licenses/
 # - Register with .edu email → download gurobi.lic
-# - Place gurobi.lic in project root
+# - Keep gurobi.lic local only
+# - Project root is supported and gitignored
 
 # 3. Install FFmpeg
 # macOS: brew install ffmpeg
@@ -149,7 +151,7 @@ python3 simulation.py
 → Use Python 3.9-3.12 instead. Install from https://www.python.org/downloads/
 
 **"No module named gurobipy"?**
-→ Install Gurobi (free academic license) and place `gurobi.lic` in project root
+→ Install Gurobi (free academic license) and keep `gurobi.lic` local only. The project root is supported and gitignored.
 
 **Serial port errors?**
 → Update `SERIAL_PORT` in config/constants.py. Check Device Manager (Windows) or `ls /dev/tty.*` (Mac/Linux)
@@ -191,15 +193,15 @@ This is a personal research project released for educational and reference use. 
 
 ### If you find issues:
 
-- **Report bugs**: [Create a bug report](https://github.com/AevarOfjord/mpc-air-bearing-satellite/issues/new?template=bug_report.md) - I'll fix them when I can
-- **Hardware issues**: [Report problems](https://github.com/AevarOfjord/mpc-air-bearing-satellite/issues/new?template=hardware_issue.md) - Helps improve reliability
-- **Documentation**: [Suggest improvements](https://github.com/AevarOfjord/mpc-air-bearing-satellite/issues/new?template=documentation.md) - Clarifications welcome
+- **Report bugs or documentation issues**: Open an issue at https://github.com/AevarOfjord/mpc-air-bearing-satellite/issues
+- **Hardware concerns**: Use the same issue tracker and include setup details, logs, and reproduction steps
+- **Questions about adapting the project**: Open an issue so the answer is visible to future users of the reference repo
 
 ### Want to modify the code?
 
-**Fork and adapt for your research!** See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for details.
+**Fork and adapt for your research.** See [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) for setup and workflow details.
 
-**Note**: This project is released as-is for educational and reference use. Bug fixes and improvements are made on a best-effort basis.
+**Note**: This project is released as-is for educational and reference use. Bug fixes and improvements are made on a best-effort basis through the maintainer's own branch, not through incoming pull requests.
 
 ---
 
@@ -238,5 +240,5 @@ Need help? Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) or open an issue.
 
 **Ready to get started?**
 ```bash
-python3 simulation.py
+satellite-sim
 ```

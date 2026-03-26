@@ -2,7 +2,7 @@
 
 This guide is for developers who want to extend or modify this project for their own research.
 
-**Note**: This is a personal research project, and pull requests are not accepted. If you want to make modifications, please fork the repository and work on your own copy. See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for details.
+**Note**: This is a personal research project, and pull requests are not accepted. If you want to make modifications, fork the repository, work on your own copy, and report bugs back through GitHub issues when relevant.
 
 ---
 
@@ -35,11 +35,11 @@ cd mpc-air-bearing-satellite
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install runtime dependencies
-pip install -r requirements.txt
+# Install the package in editable mode
+python3 -m pip install -e .
 
 # Install development tools
-pip install pytest pytest-cov black isort flake8 mypy
+python3 -m pip install -e ".[dev]"
 ```
 
 ### Verify Everything Works
